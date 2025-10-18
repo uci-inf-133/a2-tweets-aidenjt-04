@@ -42,19 +42,65 @@ class Tweet {
     }
 
     get activityType():string {
-        if (this.source != 'completed_event') {
+        if (this.source !== 'completed_event') {
             return "unknown";
         }
-        //TODO: parse the activity type from the text of the tweet
-        return "";
+
+        const tweet = this.text;
+
+        let distanceEnd = tweet.indexOf(" km");
+        let unitLength = 3;
+        
+        if (distanceEnd === -1) {
+            distanceEnd = tweet.indexOf(" mi");
+        }
+
+        if (distanceEnd === -1) {
+            return "unknown";
+        }
+
+        const activityStart = distanceEnd + unitLength + 1;
+
+        let activityEnd = tweet.indexOf(" -", activityStart);
+        const withIndex = tweet.indexOf(" with", activityStart);
+
+        if (activityEnd === -1 && withIndex !== -1) {
+            activityEnd = withIndex;
+        } else if (activityEnd !== -1 && withIndex !== -1) {
+            activityEnd = Math.min(activityEnd, withIndex);
+        } else if (activityEnd === -1 && withIndex === -1) {
+            activityEnd = tweet.length;
+        }
+
+        const activity = tweet.substring(activityStart, activityEnd).trim();
+
+        return activity;
     }
 
     get distance():number {
         if(this.source != 'completed_event') {
             return 0;
         }
-        //TODO: prase the distance from the text of the tweet
-        return 0;
+        else {
+            let tweet=this.text;
+            let distanceStart = tweet.indexOf("Just completed a ")  + "Just completed a ".length;
+            let distanceEnd = 0;
+            let isKM = false;
+            if (tweet.includes("km")) 
+                {
+                    distanceEnd = tweet.indexOf(" km");
+                    isKM = true;
+                }
+            else if (tweet.includes("mi")) 
+                {distanceEnd = tweet.indexOf(" mi");}
+            
+            let distanceStr = tweet.substring(distanceStart, distanceEnd).trim();
+            let distanceNum = parseFloat(distanceStr);
+
+            if (isKM) {distanceNum /= 1.609;}
+
+            return distanceNum;
+        }
     }
 
     getHTMLTableRow(rowNumber:number):string {
