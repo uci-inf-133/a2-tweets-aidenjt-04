@@ -9,7 +9,7 @@ class Tweet {
 
 	//returns either 'live_event', 'achievement', 'completed_event', or 'miscellaneous'
     get source():string {
-        if(this.text.includes("completed")) {return "completed_event";}
+        if(this.text.includes("completed") || this.text.includes("posted")) {return "completed_event";}
         else if(this.text.startsWith("Watch")) {return "live_event";}
         else if(this.text.startsWith("Achieved")) {return "achievement";}
         else {return "miscellaneous";}
@@ -48,9 +48,13 @@ class Tweet {
 
         const tweet = this.text;
 
+        if (!tweet.includes(" mi ") && !tweet.includes(" km ")) {
+            return "unknown";
+        }
+
         let distanceEnd = tweet.indexOf(" km");
         let unitLength = 3;
-        
+
         if (distanceEnd === -1) {
             distanceEnd = tweet.indexOf(" mi");
         }
@@ -81,26 +85,39 @@ class Tweet {
         if(this.source != 'completed_event') {
             return 0;
         }
-        else {
-            let tweet=this.text;
-            let distanceStart = tweet.indexOf("Just completed a ")  + "Just completed a ".length;
-            let distanceEnd = 0;
-            let isKM = false;
-            if (tweet.includes("km")) 
-                {
-                    distanceEnd = tweet.indexOf(" km");
-                    isKM = true;
-                }
-            else if (tweet.includes("mi")) 
-                {distanceEnd = tweet.indexOf(" mi");}
-            
-            let distanceStr = tweet.substring(distanceStart, distanceEnd).trim();
-            let distanceNum = parseFloat(distanceStr);
 
-            if (isKM) {distanceNum /= 1.609;}
+        const tweet=this.text;
 
-            return distanceNum;
+        if (!tweet.includes(" mi ") && !tweet.includes(" km ")) {
+            return 0;
         }
+
+        let distanceStart = -1;
+        if (tweet.includes("Just completed a ")) {
+            distanceStart = tweet.indexOf("Just completed a ") + "Just completed a ".length;
+        } else if (tweet.includes("Just posted a ")) {
+            distanceStart = tweet.indexOf("Just posted a ") + "Just posted a ".length;
+        }
+
+        if (distanceStart === -1) {
+            return 0;
+        }
+
+        let distanceEnd = 0;
+        let isKM = false;
+        if (tweet.includes(" km")) {
+            distanceEnd = tweet.indexOf(" km");
+            isKM = true;
+        } else if (tweet.includes(" mi")) {
+            distanceEnd = tweet.indexOf(" mi");
+        }
+
+        let distanceStr = tweet.substring(distanceStart, distanceEnd).trim();
+        let distanceNum = parseFloat(distanceStr);
+
+        if (isKM) distanceNum /= 1.609;
+
+        return distanceNum;
     }
 
     getHTMLTableRow(rowNumber: number) {
